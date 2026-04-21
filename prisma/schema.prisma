@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Bedrijf {
+  id          String   @id @default(cuid())
+  naam        String
+  kvk         String   @unique
+  eigenaar    String
+  email       String
+  telefoon    String?
+  adres       String?
+  postcode    String?
+  plaats      String?
+  hectares    Float?
+  sector      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bodemAnalyses BodemAnalyse[]
+  subsidies     SubsidieAanvraag[]
+  documents     Document[]
+  percelen      Perceel[]
+}
+
+model BodemAnalyse {
+  id          String   @id @default(cuid())
+  bedrijfId   String
+  bedrijf     Bedrijf  @relation(fields: [bedrijfId], references: [id])
+  
+  // Chemische velden
+  ph          Float?
+  fosfor      Float?
+  kalium      Float?
+  magnesium   Float?
+  kalk        Float?
+  stikstof    Float?
+  organisch   Float?
+  zuurgraad   Float?
+
+  // Microbiologie (25 velden)
+  bacterieDiversiteit   Float?
+  schimmelDiversiteit   Float?
+  actinomyceten         Float?
+  pseudomonas           Float?
+  bacillus              Float?
+  rhizobium             Float?
+  mycorrhiza            Float?
+  trichoderma           Float?
+  penicillium           Float?
+  aspergillus           Float?
+  fusarium              Float?
+  alternaria            Float?
+  botrytis              Float?
+  pythium               Float?
+  phytophthora          Float?
+  rhizoctonia           Float?
+  sclerotinia           Float?
+  verticillium          Float?
+  clavibacter           Float?
+  xanthomonas           Float?
+  ralstonia             Float?
+  streptomyces          Float?
+  celluloseDecomposers  Float?
+  nitrosomonas          Float?
+  nitrobacter           Float?
+
+  aanbeveling   String?
+  labNaam       String?
+  labDatum      DateTime?
+  createdAt     DateTime @default(now())
+}
+
+model Subsidie {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  naam        String
+  beschrijving String
+  regels      Json
+  bedragMin   Float?
+  bedragMax   Float?
+  deadline    DateTime?
+  actief      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  aanvragen   SubsidieAanvraag[]
+}
+
+model SubsidieAanvraag {
+  id          String   @id @default(cuid())
+  bedrijfId   String
+  bedrijf     Bedrijf  @relation(fields: [bedrijfId], references: [id])
+  subsidieId  String
+  subsidie    Subsidie @relation(fields: [subsidieId], references: [id])
+  
+  status      String   @default("INGEDIEND")
+  ingediendOp DateTime @default(now())
+  beoordeling String?
+  bedrag      Float?
+  documenten  Json?
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  bedrijfId   String
+  bedrijf     Bedrijf  @relation(fields: [bedrijfId], references: [id])
+  
+  naam        String
+  type        String
+  url         String
+  grootte     Int?
+  ocrText     String?
+  createdAt   DateTime @default(now())
+}
+
+model OpenDataBron {
+  id          String   @id @default(cuid())
+  naam        String
+  beschrijving String
+  url         String
+  type        String
+  categorie   String
+  laatsteUpdate DateTime?
+  actief      Boolean  @default(true)
+}
+
+model OnderzoeksExport {
+  id          String   @id @default(cuid())
+  type        String
+  filters     Json?
+  rowCount    Int?
+  url         String?
+  aangevraagdOp DateTime @default(now())
+  status      String   @default("PENDING")
+}
+
+model AgentTask {
+  id          String   @id @default(cuid())
+  taskType    String
+  payload     Json
+  status      String   @default("PENDING")
+  result      Json?
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Perceel {
+  id                String   @id @default(cuid())
+  bedrijfId         String
+  bedrijf           Bedrijf  @relation(fields: [bedrijfId], references: [id])
+  naam              String
+  kadastraleGemeente String?
+  sectie            String?
+  nummer            String?
+  oppervlakte       Float?
+  geoJson           String?
+  lat               Float?
+  lng               Float?
+  createdAt         DateTime @default(now())
+
+  @@index([bedrijfId])
+}
